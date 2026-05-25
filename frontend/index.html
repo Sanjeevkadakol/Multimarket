@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multimarket - Smart Product Price Aggregator</title>
+    <meta name="description" content="Compare product details, prices, and reviews across multiple platforms including Amazon, Walmart, and Flipkart instantly.">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="ripple-container"></div>
+    <!-- User Authentication Screen -->
+    <div id="login-overlay" class="login-overlay active">
+        <div class="premium-login-container">
+            <!-- Left Side: Visual DotMap Canvas (Black Background) -->
+            <div class="login-visual-panel">
+                <canvas id="login-dotmap-canvas"></canvas>
+                <div class="visual-panel-content">
+                    <div class="visual-logo-circle">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="visual-logo-svg">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                    </div>
+                    <h2>Multimarket</h2>
+                    <p>Compare deals and shop smarter across global platforms concurrently.</p>
+                </div>
+            </div>
+            
+            <!-- Right Side: Sign-In Form (Cream/Beige Background) -->
+            <div class="login-form-panel">
+                <div class="login-form-wrapper">
+                    <h2>Welcome back</h2>
+                    <p class="login-form-subtitle">Sign in to your account</p>
+                    
+                    <button type="button" class="google-signin-btn" id="google-login-btn">
+                        <svg class="google-icon" viewBox="0 0 24 24" width="18" height="18">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                        </svg>
+                        <span>Login with Google</span>
+                    </button>
+                    
+                    <div class="login-divider">
+                        <span>or</span>
+                    </div>
+
+                    <form id="login-form">
+                        <div class="input-group">
+                            <label for="username">Email <span class="required-star">*</span></label>
+                            <input type="email" id="username" placeholder="Enter your email address" required autocomplete="off">
+                        </div>
+                        <div class="input-group">
+                            <label for="password">Password <span class="required-star">*</span></label>
+                            <div class="password-input-container">
+                                <input type="password" id="password" placeholder="Enter your password" required autocomplete="off">
+                                <button type="button" class="password-toggle-btn" id="password-toggle" title="Toggle password visibility">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon eye-open">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon eye-closed" style="display:none;">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="submit" class="login-submit-btn">
+                            <span>Sign in</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="btn-arrow-icon">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
+                        <div class="login-forgot-password">
+                            <a href="#" id="forgot-password-link">Forgot password?</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Premium Magnetic Navigation Header -->
+    <nav class="magnetic-nav-container">
+        <ul class="magnetic-nav-list" id="magnetic-nav">
+            <li class="magnetic-tab active" data-target="search-view">Home</li>
+            <li class="magnetic-tab" data-target="favorites-view" id="magnetic-favorites-btn">Wishlist</li>
+            <li class="magnetic-tab" data-target="profile-view">Profile</li>
+            <div class="magnetic-cursor" id="magnetic-cursor"></div>
+        </ul>
+    </nav>
+
+    <!-- Premium Multimarket Split Hero Section -->
+    <section class="split-hero-section" id="hero-section">
+        <!-- Left Side Content -->
+        <div class="hero-content-left">
+            <div class="hero-left-wrapper">
+                <header class="hero-header">
+                    <div class="hero-logo-wrapper">
+                        <!-- Custom Premium SVG Shopping Cart Logo -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="hero-logo-svg" style="width: 2.2rem; height: 2.2rem; margin-right: 0.8rem; color: var(--primary); background: rgba(99, 102, 241, 0.1); padding: 0.4rem; border-radius: 8px;">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                        <div class="hero-logo-text-col">
+                            <p class="hero-logo-text">Multimarket</p>
+                            <p class="hero-slogan">Smart Comparative Aggregator</p>
+                        </div>
+                    </div>
+                </header>
+
+                <main class="hero-main-content">
+                    <h1 class="hero-title">
+                        Compare Deals. <br>
+                        <span class="hero-title-accent">Shop Smarter.</span>
+                    </h1>
+                    <div class="hero-accent-bar"></div>
+                    <p class="hero-subtitle">
+                        Search and compare prices, detailed specifications, and verified customer reviews across Amazon, Walmart, and Flipkart in real-time. Find the absolute best deals instantly.
+                    </p>
+                    <a href="#search-input" class="hero-cta-btn" onclick="document.getElementById('search-input').focus(); return true;">START COMPARING DEALS</a>
+                </main>
+
+                <footer class="hero-footer">
+                    <div class="hero-info-grid">
+                        <div class="hero-info-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hero-info-icon"><circle cx="12" cy="12" r="10"></circle><line x1="2" x2="22" y1="12" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                            <span>multimarket.com</span>
+                        </div>
+                        <div class="hero-info-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hero-info-icon"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            <span>1-800-555-MKT</span>
+                        </div>
+                        <div class="hero-info-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hero-info-icon"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            <span>Silicon Valley, CA</span>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+
+        <!-- Right Side Visual Background (Animated Clip-Path) -->
+        <div class="hero-image-right">
+            <div id="pixel-blast-canvas-container" class="pixel-blast-container"></div>
+        </div>
+    </section>
+
+    <div class="container">
+        <!-- View 1: Search View -->
+        <div id="search-view" class="view-panel active">
+            <section class="search-section">
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="Search for products (e.g., iPhone 16, laptop)..." autocomplete="off">
+                    <button id="search-button">Search</button>
+                </div>
+            </section>
+
+            <!-- Sliding Electronics Landing Carousel -->
+            <div id="landing-carousel" class="carousel-container">
+                <h3 class="carousel-title">🔥 Popular Electronics</h3>
+                <div class="carousel-track">
+                    <div class="carousel-slide">
+                        <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&fit=crop" alt="Smartphones">
+                        <div class="slide-info">
+                            <h4>Smartphones</h4>
+                            <p>Premium 5G Devices</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&fit=crop" alt="Laptops">
+                        <div class="slide-info">
+                            <h4>Laptops</h4>
+                            <p>High Performance Workstations</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&fit=crop" alt="Audio">
+                        <div class="slide-info">
+                            <h4>Premium Audio</h4>
+                            <p>Studio Noise Cancelling</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&fit=crop" alt="Wearables">
+                        <div class="slide-info">
+                            <h4>Smart Wearables</h4>
+                            <p>Fitness & Health Trackers</p>
+                        </div>
+                    </div>
+                    <!-- Duplicated slides for infinite loops -->
+                    <div class="carousel-slide">
+                        <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&fit=crop" alt="Smartphones">
+                        <div class="slide-info">
+                            <h4>Smartphones</h4>
+                            <p>Premium 5G Devices</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&fit=crop" alt="Laptops">
+                        <div class="slide-info">
+                            <h4>Laptops</h4>
+                            <p>High Performance Workstations</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="loading" class="loading-spinner"></div>
+
+            <main id="results" class="results-grid">
+                <!-- Amazon Column -->
+                <div class="platform-column" id="amazon-column">
+                    <div class="platform-header">
+                        <span class="platform-title amazon">Amazon</span>
+                    </div>
+                    <div class="product-list" id="amazon-list">
+                        <!-- Dynamic Products Here -->
+                    </div>
+                </div>
+
+                <!-- Walmart Column -->
+                <div class="platform-column" id="walmart-column">
+                    <div class="platform-header">
+                        <span class="platform-title walmart">Walmart</span>
+                    </div>
+                    <div class="product-list" id="walmart-list">
+                        <!-- Dynamic Products Here -->
+                    </div>
+                </div>
+
+                <!-- Flipkart Column -->
+                <div class="platform-column" id="flipkart-column">
+                    <div class="platform-header">
+                        <span class="platform-title flipkart">Flipkart</span>
+                    </div>
+                    <div class="product-list" id="flipkart-list">
+                        <!-- Dynamic Products Here -->
+                    </div>
+                </div>
+
+                <!-- Snapdeal Column -->
+                <div class="platform-column" id="snapdeal-column">
+                    <div class="platform-header">
+                        <span class="platform-title snapdeal">Snapdeal</span>
+                    </div>
+                    <div class="product-list" id="snapdeal-list">
+                        <!-- Dynamic Products Here -->
+                    </div>
+                </div>
+            </main>
+
+            <!-- Premium Glassmorphic About Section -->
+            <section id="about-us-section" class="about-us-section">
+                <div class="about-glass-card">
+                    <div class="about-header">
+                        <div class="about-badge">
+                            <span class="about-badge-icon">ℹ️</span>
+                            <span>About Multimarket</span>
+                        </div>
+                        <h2>Smart Comparative Aggregator</h2>
+                        <p class="about-subtitle">Empowering smarter shopping decisions by aggregating live pricing and specs concurrently across 4 major online marketplaces.</p>
+                    </div>
+
+                    <!-- Premium MagicBento Grid Integration -->
+                    <div class="magic-bento-container">
+                        <div class="magic-bento-grid">
+                            <!-- Card 1: Insights (col-span-2) -->
+                            <div class="magic-bento-card md:col-span-2 auto-hide-text" data-glow="228, 121, 17">
+                                <div class="bento-glow-spot"></div>
+                                <div class="bento-border-glow"></div>
+                                <div class="bento-card-inner">
+                                    <div class="bento-header-info">
+                                        <div class="bento-icon-wrapper">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="bento-icon"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                                        </div>
+                                        <h3 class="bento-card-title">Real-Time Insights</h3>
+                                        <p class="bento-card-subtitle">Track and analyze redirection click volume across platforms dynamically.</p>
+                                    </div>
+                                    <div class="bento-custom-content">
+                                        <div class="bento-analytics-preview">
+                                            <div class="bento-preview-bar-row">
+                                                <span class="bento-bar-label">AMZ</span>
+                                                <div class="bento-bar-wrapper"><div class="bento-bar-fill amz-fill" style="width: 70%;"></div></div>
+                                                <span class="bento-bar-val">70%</span>
+                                            </div>
+                                            <div class="bento-preview-bar-row">
+                                                <span class="bento-bar-label">WMT</span>
+                                                <div class="bento-bar-wrapper"><div class="bento-bar-fill wmt-fill" style="width: 45%;"></div></div>
+                                                <span class="bento-bar-val">45%</span>
+                                            </div>
+                                            <div class="bento-preview-bar-row">
+                                                <span class="bento-bar-label">FK</span>
+                                                <div class="bento-bar-wrapper"><div class="bento-bar-fill fk-fill" style="width: 90%;"></div></div>
+                                                <span class="bento-bar-val">90%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 2: Overview (row-span-2) -->
+                            <div class="magic-bento-card md:row-span-2 auto-hide-text" data-glow="0, 113, 220">
+                                <div class="bento-glow-spot"></div>
+                                <div class="bento-border-glow"></div>
+                                <div class="bento-card-inner">
+                                    <div class="bento-header-info">
+                                        <div class="bento-icon-wrapper">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="bento-icon"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+                                        </div>
+                                        <h3 class="bento-card-title">Quad Comparator</h3>
+                                        <p class="bento-card-subtitle">Compare deals side-by-side across all four e-commerce marketplaces.</p>
+                                    </div>
+                                    <div class="bento-custom-content">
+                                        <div class="bento-quad-grid-preview">
+                                            <div class="quad-logo-box amazon">A</div>
+                                            <div class="quad-logo-box walmart">W</div>
+                                            <div class="quad-logo-box flipkart">F</div>
+                                            <div class="quad-logo-box snapdeal">S</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 3: Wishlist (col-span-1) -->
+                            <div class="magic-bento-card auto-hide-text" data-glow="228, 0, 70">
+                                <div class="bento-glow-spot"></div>
+                                <div class="bento-border-glow"></div>
+                                <div class="bento-card-inner">
+                                    <div class="bento-header-info">
+                                        <div class="bento-icon-wrapper">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="bento-icon"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                                        </div>
+                                        <h3 class="bento-card-title">Persisted Wishlist</h3>
+                                        <p class="bento-card-subtitle">Bookmark products securely inside SQLite local database.</p>
+                                    </div>
+                                    <div class="bento-custom-content">
+                                        <div class="bento-wishlist-preview">
+                                            <span class="bento-heart animate-pulse">❤️</span>
+                                            <span class="bento-wishlist-count">Wishlist Cached</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 4: Engine (col-span-2) -->
+                            <div class="magic-bento-card md:col-span-2 auto-hide-text" data-glow="99, 102, 241">
+                                <div class="bento-glow-spot"></div>
+                                <div class="bento-border-glow"></div>
+                                <div class="bento-card-inner">
+                                    <div class="bento-header-info">
+                                        <div class="bento-icon-wrapper">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="bento-icon"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                        </div>
+                                        <h3 class="bento-card-title">Concurrent Scraper</h3>
+                                        <p class="bento-card-subtitle">Query 4 markets in milliseconds concurrently with direct API tunnels.</p>
+                                    </div>
+                                    <div class="bento-custom-content">
+                                        <div class="bento-aggregator-preview">
+                                            <div class="bento-gauge">
+                                                <div class="bento-gauge-ring"></div>
+                                                <div class="bento-gauge-value">340ms</div>
+                                            </div>
+                                            <p class="bento-subtext">Direct API Scraper Timer</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 5: Design (col-span-1) -->
+                            <div class="magic-bento-card auto-hide-text" data-glow="168, 85, 247">
+                                <div class="bento-glow-spot"></div>
+                                <div class="bento-border-glow"></div>
+                                <div class="bento-card-inner">
+                                    <div class="bento-header-info">
+                                        <div class="bento-icon-wrapper">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="bento-icon"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+                                        </div>
+                                        <h3 class="bento-card-title">Glassmorphic Theme</h3>
+                                        <p class="bento-card-subtitle">Curated neon styling, harmonies, and smooth transitions.</p>
+                                    </div>
+                                    <div class="bento-custom-content">
+                                        <div class="bento-theme-preview">
+                                            <div class="neon-circle-glow"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 6: Access (col-span-1) -->
+                            <div class="magic-bento-card auto-hide-text" data-glow="16, 185, 129">
+                                <div class="bento-glow-spot"></div>
+                                <div class="bento-border-glow"></div>
+                                <div class="bento-card-inner">
+                                    <div class="bento-header-info">
+                                        <div class="bento-icon-wrapper">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="bento-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                        </div>
+                                        <h3 class="bento-card-title">Secure Authentication</h3>
+                                        <p class="bento-card-subtitle">Relational database admin password protecting access credentials.</p>
+                                    </div>
+                                    <div class="bento-custom-content">
+                                        <div class="bento-auth-preview">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="bento-shield-icon">
+                                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                            </svg>
+                                            <span class="bento-status-badge">ADMIN PROTECTED</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tech Stack Row & Contact -->
+                    <div class="about-tech-row">
+                        <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                            <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-muted);">Engineered With:</span>
+                            <span style="font-size: 0.8rem; color: rgba(15, 23, 42, 0.4);">© 2026 Multimarket Inc. All Rights Reserved.</span>
+                        </div>
+                        <div class="tech-badges">
+                            <span class="tech-badge">Node.js</span>
+                            <span class="tech-badge">Express</span>
+                            <span class="tech-badge">SQLite3</span>
+                            <span class="tech-badge">Vite</span>
+                            <span class="tech-badge">Tailwind CSS</span>
+                            <span class="tech-badge">TypeScript</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- View 2: Favorites View -->
+        <div id="favorites-view" class="view-panel">
+            <h2 class="section-title">Saved Products</h2>
+            <div id="favorites-grid" class="favorites-grid">
+                <!-- Bookmarked products will dynamically load here -->
+                <div class="no-results">Your wishlist is empty. Try adding some items!</div>
+            </div>
+        </div>
+
+        <!-- View 3: Profile View (User Click Analysis Dashboard) -->
+        <div id="profile-view" class="view-panel">
+            <div class="profile-dashboard-container">
+                <!-- Header section -->
+                <div class="profile-dashboard-header">
+                    <div class="insight-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="insight-badge-icon"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        <span>User Insights & Analytics</span>
+                    </div>
+                    <h2>Marketplace Navigation Analysis</h2>
+                    <p>Track and visualize which e-commerce platform receives the highest volume of user redirection and search queries.</p>
+                </div>
+
+                <!-- Profile Overview Info Card -->
+                <div class="user-profile-summary-card">
+                    <div class="user-avatar-container">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80" alt="User Profile" class="user-avatar">
+                        <div class="avatar-glow"></div>
+                    </div>
+                    <div class="user-info-text">
+                        <h3 id="profile-username-display">admin@multimarket.com</h3>
+                        <p class="user-role-badge">Premium Administrator</p>
+                        <div class="user-stats-bullets">
+                            <span>Status: <strong style="color: #10b981;">Active</strong></span>
+                            <span>•</span>
+                            <span>Favorite category: <strong>Electronics</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Redirection Graph Layout -->
+                <div class="profile-grid">
+                    <!-- Visual SVG/Bar Chart Card -->
+                    <div class="dashboard-card main-chart-card">
+                        <div class="border-beam-glow"></div>
+                        <div class="card-header-row">
+                            <div>
+                                <h3>Redirection Flow Volume</h3>
+                                <p class="card-subtitle">Redirection click counts across platforms</p>
+                            </div>
+                            <button id="reset-redirection-btn" class="dashboard-btn-secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                                Reset Stats
+                            </button>
+                        </div>
+
+                        <!-- CSS Animated Vertical Bar Chart -->
+                        <div class="bar-chart-visualization">
+                            <div class="chart-y-axis">
+                                <span>100%</span>
+                                <span>50%</span>
+                                <span>0%</span>
+                            </div>
+                            
+                            <div class="chart-bars-container">
+                                <!-- Amazon -->
+                                <div class="chart-bar-column" data-platform="amazon">
+                                    <div class="chart-bar-tooltip"><span class="count">0</span> clicks</div>
+                                    <div class="chart-bar-wrapper">
+                                        <div id="bar-amazon" class="chart-bar-fill amazon-grad" style="height: 10%;">
+                                            <div class="bar-shine"></div>
+                                        </div>
+                                    </div>
+                                    <span class="chart-bar-label">Amazon</span>
+                                </div>
+
+                                <!-- Walmart -->
+                                <div class="chart-bar-column" data-platform="walmart">
+                                    <div class="chart-bar-tooltip"><span class="count">0</span> clicks</div>
+                                    <div class="chart-bar-wrapper">
+                                        <div id="bar-walmart" class="chart-bar-fill walmart-grad" style="height: 10%;">
+                                            <div class="bar-shine"></div>
+                                        </div>
+                                    </div>
+                                    <span class="chart-bar-label">Walmart</span>
+                                </div>
+
+                                <!-- Flipkart -->
+                                <div class="chart-bar-column" data-platform="flipkart">
+                                    <div class="chart-bar-tooltip"><span class="count">0</span> clicks</div>
+                                    <div class="chart-bar-wrapper">
+                                        <div id="bar-flipkart" class="chart-bar-fill flipkart-grad" style="height: 10%;">
+                                            <div class="bar-shine"></div>
+                                        </div>
+                                    </div>
+                                    <span class="chart-bar-label">Flipkart</span>
+                                </div>
+
+                                <!-- Snapdeal -->
+                                <div class="chart-bar-column" data-platform="snapdeal">
+                                    <div class="chart-bar-tooltip"><span class="count">0</span> clicks</div>
+                                    <div class="chart-bar-wrapper">
+                                        <div id="bar-snapdeal" class="chart-bar-fill snapdeal-grad" style="height: 10%;">
+                                            <div class="bar-shine"></div>
+                                        </div>
+                                    </div>
+                                    <span class="chart-bar-label">Snapdeal</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Redirection Statistics Metrics Panel -->
+                    <div class="dashboard-card metrics-card">
+                        <div class="card-header-row">
+                            <div>
+                                <h3>Dominance Index</h3>
+                                <p class="card-subtitle">Redirection metrics breakdown</p>
+                            </div>
+                        </div>
+                        
+                        <div class="metrics-stack">
+                            <!-- Dominance Badge -->
+                            <div class="dominance-leader-badge">
+                                <div class="leader-icon-wrapper" id="leader-icon-bg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="leader-icon"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                </div>
+                                <div class="leader-info">
+                                    <span class="label">Top Redirection</span>
+                                    <h4 id="top-platform-name">None</h4>
+                                    <p id="top-platform-percentage">0% of total navigation</p>
+                                </div>
+                            </div>
+
+                            <!-- Statistics Grid -->
+                            <div class="stats-mini-grid">
+                                <div class="stats-mini-box">
+                                    <span class="box-label">Total Redirects</span>
+                                    <span class="box-number" id="stats-total-redirects">0</span>
+                                </div>
+                                <div class="stats-mini-box">
+                                    <span class="box-label">Avg Redirects</span>
+                                    <span class="box-number" id="stats-avg-redirects">0.0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="metrics-footer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="footer-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            <span>Cookies & LocalStorage persistent active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Redirection simulator buttons -->
+                <div class="redirection-sim-panel">
+                    <div class="sim-header">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                        <h3>Simulate Platform Redirections</h3>
+                    </div>
+                    <p class="sim-subtitle">Click these buttons to simulate navigation redirection to different e-commerce platform links and watch the graph update in real-time!</p>
+                    <div class="sim-buttons-grid">
+                        <button class="sim-btn amazon-btn" data-platform="amazon">
+                            <span class="sim-btn-icon">🛒</span>
+                            <span>Click Amazon Link</span>
+                        </button>
+                        <button class="sim-btn walmart-btn" data-platform="walmart">
+                            <span class="sim-btn-icon">🛒</span>
+                            <span>Click Walmart Link</span>
+                        </button>
+                        <button class="sim-btn flipkart-btn" data-platform="flipkart">
+                            <span class="sim-btn-icon">🛒</span>
+                            <span>Click Flipkart Link</span>
+                        </button>
+                        <button class="sim-btn snapdeal-btn" data-platform="snapdeal">
+                            <span class="sim-btn-icon">🛒</span>
+                            <span>Click Snapdeal Link</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Specifications Modal Pop-Up -->
+    <div id="product-modal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close-btn" id="modal-close-btn">&times;</button>
+            <div class="modal-body">
+                <div class="modal-header-section">
+                    <img id="modal-product-image" src="" alt="Product Image">
+                    <div class="modal-header-text">
+                        <span id="modal-product-platform" class="platform-badge">Amazon</span>
+                        <h2 id="modal-product-name">Product Name</h2>
+                        <div id="modal-product-meta" class="modal-meta-row">
+                            <span class="meta-item">Brand: <strong id="modal-product-brand">N/A</strong></span>
+                            <span class="meta-item">Category: <strong id="modal-product-category">N/A</strong></span>
+                        </div>
+                        <div class="modal-price-rating-row">
+                            <span id="modal-product-price" class="modal-price">$0.00</span>
+                            <span id="modal-product-rating" class="modal-rating">⭐ 4.5</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-description-section">
+                    <h3>Specifications & Details</h3>
+                    <p id="modal-product-description">Detailed specifications summary from the SQLite database.</p>
+                </div>
+                <div class="modal-comparisons-section" id="modal-comparisons-section" style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Platform Price Matches</h3>
+                    <div id="modal-comparisons-table" class="comparisons-table" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        <!-- Relational comparison rows populated dynamically -->
+                    </div>
+                </div>
+                <div class="modal-footer-section">
+                    <button class="modal-wishlist-btn" id="modal-wishlist-btn">❤️ Save to Wishlist</button>
+                    <a id="modal-product-link" href="#" target="_blank" class="modal-buy-btn">Go to Marketplace ↗</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script type="module" src="/main.js"></script>
+</body>
+</html>
