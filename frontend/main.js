@@ -124,8 +124,10 @@ async function performSearch() {
 }
 
 async function loadFavorites() {
+  const userId = localStorage.getItem('multimarket_user_id');
+  if (!userId) return;
   try {
-    const res = await fetch(`${API_BASE_URL}/api/favorites`);
+    const res = await fetch(`${API_BASE_URL}/api/favorites?user_id=${userId}`);
     if (res.ok) {
       favoritesList = await res.json();
     }
@@ -219,11 +221,16 @@ function renderResults(platform, items, container) {
 
 async function handleFavoriteToggle(item, buttonEl) {
   const isAlreadyFav = buttonEl.classList.contains('active');
+  const userId = localStorage.getItem('multimarket_user_id');
+  if (!userId) {
+    alert('Please log in first to wishlist products.');
+    return;
+  }
 
   try {
     if (isAlreadyFav) {
       // Remove from favorites
-      const res = await fetch(`${API_BASE_URL}/api/favorites/${item.id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE_URL}/api/favorites/${item.id}?user_id=${userId}`, { method: 'DELETE' });
       if (res.ok) {
         buttonEl.classList.remove('active');
         buttonEl.title = 'Save to wishlist';
@@ -234,7 +241,7 @@ async function handleFavoriteToggle(item, buttonEl) {
       const res = await fetch(`${API_BASE_URL}/api/favorites`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item)
+        body: JSON.stringify({ user_id: userId, ...item })
       });
       if (res.ok) {
         buttonEl.classList.add('active');
@@ -248,6 +255,100 @@ async function handleFavoriteToggle(item, buttonEl) {
 }
 
 async function renderFavoritesPage() {
+  const userRole = localStorage.getItem('multimarket_user_role');
+  
+  if (userRole === 'admin') {
+    favoritesGrid.innerHTML = '<div class="loading-spinner active" style="position: static; transform: none; margin: 2rem auto;"></div>';
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/favorites`);
+      if (!res.ok) throw new Error('Failed to fetch admin favorites');
+      const allWishlists = await res.json();
+      
+      favoritesGrid.innerHTML = '';
+      
+      const sectionTitle = document.querySelector('#favorites-view .section-title');
+      if (sectionTitle) {
+        sectionTitle.textContent = 'Wishlist Master Logs (Admin Panel)';
+      }
+      
+      if (allWishlists.length === 0) {
+        favoritesGrid.innerHTML = '<div class="no-results">No wishlisted products found in the database.</div>';
+        return;
+      }
+      
+      // Render as a premium glassmorphic table
+      const tableWrapper = document.createElement('div');
+      tableWrapper.className = 'admin-table-wrapper';
+      tableWrapper.innerHTML = `
+        <table class="admin-wishlist-table">
+          <thead>
+            <tr>
+              <th>User Details</th>
+              <th>Product Image</th>
+              <th>Product Details</th>
+              <th>Platform</th>
+              <th>Price</th>
+              <th>Date Added</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${allWishlists.map(item => {
+              const formattedDate = new Date(item.created_at).toLocaleString();
+              let priceStr = item.price || 'N/A';
+              
+              // Apply Currency Formatting to show Rupees cleanly if numeric
+              if (typeof priceStr === 'string' && priceStr.startsWith('$')) {
+                const usdValue = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
+                if (!isNaN(usdValue)) {
+                  priceStr = `₹${Math.round(usdValue * 83).toLocaleString('en-IN')}`;
+                }
+              } else if (typeof priceStr === 'string' && !priceStr.startsWith('₹') && priceStr !== 'N/A') {
+                const val = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
+                if (!isNaN(val)) {
+                  priceStr = `₹${Math.round(val).toLocaleString('en-IN')}`;
+                }
+              }
+
+              return `
+                <tr>
+                  <td>
+                    <div class="admin-user-cell">
+                      <span class="admin-user-name">${item.user_name}</span>
+                      <span class="admin-user-email">${item.user_email}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <img src="${item.image}" alt="${item.title}" class="admin-table-product-img" onerror="this.src='https://via.placeholder.com/200';">
+                  </td>
+                  <td>
+                    <div class="admin-product-cell">
+                      <a href="${item.link}" target="_blank" class="admin-product-link" onclick="trackRedirection('${item.platform}')">${item.title}</a>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="platform-title ${item.platform.toLowerCase()}">${item.platform.toUpperCase()}</span>
+                  </td>
+                  <td class="admin-price-cell">${priceStr}</td>
+                  <td class="admin-date-cell">${formattedDate}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+      favoritesGrid.appendChild(tableWrapper);
+    } catch (err) {
+      console.error(err);
+      favoritesGrid.innerHTML = '<div class="no-results" style="color: var(--primary);">Failed to load admin wishlist dashboard.</div>';
+    }
+    return;
+  }
+
+  const sectionTitle = document.querySelector('#favorites-view .section-title');
+  if (sectionTitle) {
+    sectionTitle.textContent = 'Saved Products';
+  }
+
   await loadFavorites();
   favoritesGrid.innerHTML = '';
 
@@ -283,7 +384,6 @@ async function renderFavoritesPage() {
     favBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
       await handleFavoriteToggle(item, favBtn);
-      // Immediately refresh the grid when items are deleted on the favorites view
       renderFavoritesPage();
     });
 
@@ -293,10 +393,77 @@ async function renderFavoritesPage() {
 
 // ==================== AUTHENTICATION & CAROUSEL & MODAL SYSTEM ====================
 
+function handleLogout() {
+  localStorage.removeItem('multimarket_login');
+  localStorage.removeItem('multimarket_user');
+  localStorage.removeItem('multimarket_user_id');
+  localStorage.removeItem('multimarket_user_email');
+  localStorage.removeItem('multimarket_user_role');
+
+  // Re-enable the login dotmap animation
+  initLoginDotMap();
+
+  // Show the login overlay
+  const loginOverlay = document.getElementById('login-overlay');
+  if (loginOverlay) {
+    loginOverlay.classList.add('active');
+    loginOverlay.style.opacity = '';
+  }
+
+  // Clear query and search UI elements
+  if (searchInput) searchInput.value = '';
+  if (resultsGrid) resultsGrid.classList.remove('visible');
+  const carousel = document.getElementById('landing-carousel');
+  if (carousel) carousel.classList.remove('collapsed');
+
+  // Reset navigation states back to Home view
+  const tabs = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.view-panel');
+  const heroSection = document.getElementById('hero-section');
+
+  tabs.forEach(btn => {
+    if (btn.getAttribute('data-target') === 'search-view') {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  const magneticTabs = document.querySelectorAll('.magnetic-tab');
+  const magneticCursor = document.getElementById('magnetic-cursor');
+  magneticTabs.forEach(tab => {
+    if (tab.getAttribute('data-target') === 'search-view') {
+      tab.classList.add('active');
+      if (magneticCursor) {
+        magneticCursor.style.width = `${tab.offsetWidth}px`;
+        magneticCursor.style.left = `${tab.offsetLeft}px`;
+        magneticCursor.style.opacity = '1';
+      }
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+
+  panels.forEach(panel => {
+    if (panel.id === 'search-view') {
+      panel.classList.add('active');
+    } else {
+      panel.classList.remove('active');
+    }
+  });
+
+  if (heroSection) {
+    heroSection.style.display = 'flex';
+  }
+}
+
 function checkAuth() {
   // Always force the login page to load first on fresh load/restart
   localStorage.removeItem('multimarket_login');
   localStorage.removeItem('multimarket_user');
+  localStorage.removeItem('multimarket_user_id');
+  localStorage.removeItem('multimarket_user_email');
+  localStorage.removeItem('multimarket_user_role');
   
   const loggedIn = localStorage.getItem('multimarket_login');
   const loginOverlay = document.getElementById('login-overlay');
@@ -308,6 +475,11 @@ function checkAuth() {
 }
 
 function initAuthEvents() {
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', handleLogout);
+  }
+
   const loginForm = document.getElementById('login-form');
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -329,6 +501,9 @@ function initAuthEvents() {
       if (data.success) {
         localStorage.setItem('multimarket_login', 'true');
         localStorage.setItem('multimarket_user', data.user.name);
+        localStorage.setItem('multimarket_user_id', data.user.user_id);
+        localStorage.setItem('multimarket_user_email', data.user.email);
+        localStorage.setItem('multimarket_user_role', data.user.role);
         
         // Resource cleanup: Clean up map animation when signed in
         const canvas = document.getElementById('login-dotmap-canvas');
@@ -348,15 +523,112 @@ function initAuthEvents() {
       }
     } catch (err) {
       console.error('Login error:', err);
-      alert('Login failed: ' + err.message + '\n\nPlease use valid database credentials:\n- admin@multimarket.com / admin123\n- user@multimarket.com / user123');
+      alert('Login failed: ' + err.message + '\n\nPlease check your credentials or register a new account.');
     }
   });
+
+  // Toggle modes between login and registration panels
+  const linkToRegister = document.getElementById('link-to-register');
+  const linkToLogin = document.getElementById('link-to-login');
+  const loginWrapper = document.getElementById('login-form-wrapper');
+  const registerWrapper = document.getElementById('register-form-wrapper');
+
+  if (linkToRegister && linkToLogin && loginWrapper && registerWrapper) {
+    linkToRegister.addEventListener('click', (e) => {
+      e.preventDefault();
+      loginWrapper.style.display = 'none';
+      registerWrapper.style.display = 'block';
+    });
+
+    linkToLogin.addEventListener('click', (e) => {
+      e.preventDefault();
+      registerWrapper.style.display = 'none';
+      loginWrapper.style.display = 'block';
+    });
+  }
+
+  // Registration password eye visibility toggler
+  const regPasswordToggle = document.getElementById('reg-password-toggle');
+  const regPasswordInput = document.getElementById('reg-password');
+  if (regPasswordToggle && regPasswordInput) {
+    const eyeOpen = regPasswordToggle.querySelector('.eye-open');
+    const eyeClosed = regPasswordToggle.querySelector('.eye-closed');
+
+    regPasswordToggle.addEventListener('click', () => {
+      const isPassword = regPasswordInput.type === 'password';
+      regPasswordInput.type = isPassword ? 'text' : 'password';
+
+      if (isPassword) {
+        eyeOpen.style.display = 'none';
+        eyeClosed.style.display = 'block';
+      } else {
+        eyeOpen.style.display = 'block';
+        eyeClosed.style.display = 'none';
+      }
+    });
+  }
+
+  // Handle registration form submission
+  const registerForm = document.getElementById('register-form');
+  if (registerForm) {
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value.trim();
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Registration failed');
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          localStorage.setItem('multimarket_login', 'true');
+          localStorage.setItem('multimarket_user', data.user.name);
+          localStorage.setItem('multimarket_user_id', data.user.user_id);
+          localStorage.setItem('multimarket_user_email', data.user.email);
+          localStorage.setItem('multimarket_user_role', data.user.role);
+
+          // Resource cleanup: Clean up map animation when signed in
+          const canvas = document.getElementById('login-dotmap-canvas');
+          if (canvas && canvas._dotmapCleanup) {
+            canvas._dotmapCleanup();
+          }
+
+          const loginOverlay = document.getElementById('login-overlay');
+          loginOverlay.style.transition = 'opacity 0.4s ease';
+          loginOverlay.style.opacity = '0';
+          setTimeout(() => {
+            loginOverlay.classList.remove('active');
+            loginOverlay.style.opacity = '';
+            registerForm.reset();
+            // Reset to show login panel next time overlay is loaded
+            if (loginWrapper && registerWrapper) {
+              registerWrapper.style.display = 'none';
+              loginWrapper.style.display = 'block';
+            }
+          }, 400);
+        }
+      } catch (err) {
+        console.error('Registration error:', err);
+        alert(err.message);
+      }
+    });
+  }
 
   // Google Single Sign-on click simulation
   const googleBtn = document.getElementById('google-login-btn');
   if (googleBtn) {
     googleBtn.addEventListener('click', () => {
-      alert('Google Single-Sign On is currently simulated for premium workspace integration. Please use the standard credentials:\n\nEmail: admin@multimarket.com\nPassword: admin123');
+      alert('Google Single-Sign On is currently simulated. Please use standard registered credentials or create a new account.');
     });
   }
 
@@ -365,7 +637,7 @@ function initAuthEvents() {
   if (forgotLink) {
     forgotLink.addEventListener('click', (e) => {
       e.preventDefault();
-      alert('Password Recovery Info:\n\nPlease use valid database credentials:\n- admin@multimarket.com / admin123\n- user@multimarket.com / user123');
+      alert('Password Recovery Info:\n\nPlease contact the administrator or register a new account if you do not have one.');
     });
   }
 }
@@ -1050,10 +1322,18 @@ function trackRedirection(platform) {
 
 function renderRedirectionGraph() {
 
-  // Update username display in profile summary
+  // Update username display and role in profile summary
   const usernameDisplay = document.getElementById('profile-username-display');
   if (usernameDisplay) {
-    usernameDisplay.textContent = localStorage.getItem('multimarket_user') || 'admin@multimarket.com';
+    const email = localStorage.getItem('multimarket_user_email');
+    const name = localStorage.getItem('multimarket_user');
+    usernameDisplay.textContent = email || name || 'admin@multimarket.com';
+  }
+
+  const roleDisplay = document.querySelector('#profile-view .user-role-badge');
+  if (roleDisplay) {
+    const role = localStorage.getItem('multimarket_user_role') || 'admin';
+    roleDisplay.textContent = role === 'admin' ? 'Premium Administrator' : 'Standard User';
   }
 
   const clicks = {

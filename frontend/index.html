@@ -31,9 +31,10 @@
                 </div>
             </div>
             
-            <!-- Right Side: Sign-In Form (Cream/Beige Background) -->
+            <!-- Right Side: Sign-In / Sign-Up Form Panel (Cream/Beige Background) -->
             <div class="login-form-panel">
-                <div class="login-form-wrapper">
+                <!-- Sign-In Form Wrapper -->
+                <div class="login-form-wrapper" id="login-form-wrapper">
                     <h2>Welcome back</h2>
                     <p class="login-form-subtitle">Sign in to your account</p>
                     
@@ -79,8 +80,52 @@
                                 <polyline points="12 5 19 12 12 19"></polyline>
                             </svg>
                         </button>
-                        <div class="login-forgot-password">
+                        <div class="login-forgot-password" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
                             <a href="#" id="forgot-password-link">Forgot password?</a>
+                            <a href="#" id="link-to-register" style="color: var(--primary); font-weight: 700; text-decoration: none;">Create Account</a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Sign-Up Form Wrapper -->
+                <div class="login-form-wrapper" id="register-form-wrapper" style="display: none;">
+                    <h2>Create Account</h2>
+                    <p class="login-form-subtitle">Register to track and compare deals</p>
+                    
+                    <form id="register-form">
+                        <div class="input-group">
+                            <label for="reg-name">Full Name <span class="required-star">*</span></label>
+                            <input type="text" id="reg-name" placeholder="Enter your full name" required autocomplete="off">
+                        </div>
+                        <div class="input-group">
+                            <label for="reg-email">Email <span class="required-star">*</span></label>
+                            <input type="email" id="reg-email" placeholder="Enter your email address" required autocomplete="off">
+                        </div>
+                        <div class="input-group">
+                            <label for="reg-password">Password <span class="required-star">*</span></label>
+                            <div class="password-input-container">
+                                <input type="password" id="reg-password" placeholder="Create a strong password" required autocomplete="off">
+                                <button type="button" class="password-toggle-btn" id="reg-password-toggle" title="Toggle password visibility">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon eye-open">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="eye-icon eye-closed" style="display:none;">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="submit" class="login-submit-btn">
+                            <span>Register</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="btn-arrow-icon">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
+                        <div class="login-forgot-password" style="display: flex; justify-content: center; margin-top: 1rem;">
+                            <a href="#" id="link-to-login" style="color: var(--primary); font-weight: 700; text-decoration: none;">Already have an account? Sign In</a>
                         </div>
                     </form>
                 </div>
@@ -477,6 +522,10 @@
                             <span>Favorite category: <strong>Electronics</strong></span>
                         </div>
                     </div>
+                    <button id="logout-btn" class="dashboard-btn-secondary" style="margin-left: auto; background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.2); color: #ef4444; display: flex; align-items: center; gap: 0.4rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon" style="margin-right: 2px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        <span>Logout</span>
+                    </button>
                 </div>
 
                 <!-- Main Redirection Graph Layout -->

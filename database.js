@@ -14,6 +14,18 @@ db.pragma('journal_mode = WAL');
 // Enforce referential integrity (foreign keys)
 db.pragma('foreign_keys = ON');
 
+// Drop old favorites table if it doesn't support user association
+try {
+  const info = db.prepare("PRAGMA table_info(favorites)").all();
+  const hasUserId = info.some(col => col.name === 'user_id');
+  if (info.length > 0 && !hasUserId) {
+    console.log('[Database] Dropping old favorites table to apply new user-centric schema...');
+    db.exec('DROP TABLE IF EXISTS favorites');
+  }
+} catch (e) {
+  console.error('[Database] Error checking favorites table schema:', e);
+}
+
 // Initialize database schema
 db.exec(`
   CREATE TABLE IF NOT EXISTS search_cache (
@@ -23,13 +35,16 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS favorites (
-    id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    id TEXT NOT NULL,
     title TEXT,
     price TEXT,
     image TEXT,
     link TEXT,
     platform TEXT,
-    created_at INTEGER
+    created_at INTEGER,
+    PRIMARY KEY (user_id, id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS price_history (
@@ -174,25 +189,35 @@ export function setSearchCache(query, results) {
   console.log(`[Cache Set] Cached '${query}' results in database`);
 }
 
-export function getFavorites() {
-  const stmt = db.prepare('SELECT * FROM favorites ORDER BY created_at DESC');
+export function getFavorites(userId) {
+  const stmt = db.prepare('SELECT * FROM favorites WHERE user_id = ? ORDER BY created_at DESC');
+  return stmt.all(userId);
+}
+
+export function getAllFavoritesWithUsers() {
+  const stmt = db.prepare(`
+    SELECT f.*, u.name AS user_name, u.email AS user_email
+    FROM favorites f
+    JOIN users u ON f.user_id = u.user_id
+    ORDER BY f.created_at DESC
+  `);
   return stmt.all();
 }
 
-export function addFavorite(item) {
+export function addFavorite(userId, item) {
   const { id, title, price, image, link, platform } = item;
   const stmt = db.prepare(`
-    INSERT OR REPLACE INTO favorites (id, title, price, image, link, platform, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT OR REPLACE INTO favorites (user_id, id, title, price, image, link, platform, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  stmt.run(id, title, price, image, link, platform, Date.now());
-  console.log(`[Database] Added favorite: ${title}`);
+  stmt.run(userId, id, title, price, image, link, platform, Date.now());
+  console.log(`[Database] Added favorite: ${title} for user ID ${userId}`);
 }
 
-export function removeFavorite(id) {
-  const stmt = db.prepare('DELETE FROM favorites WHERE id = ?');
-  stmt.run(id);
-  console.log(`[Database] Removed favorite ID: ${id}`);
+export function removeFavorite(userId, id) {
+  const stmt = db.prepare('DELETE FROM favorites WHERE user_id = ? AND id = ?');
+  stmt.run(userId, id);
+  console.log(`[Database] Removed favorite ID: ${id} for user ID ${userId}`);
 }
 
 export function logPrice(productTitle, price, platform) {
@@ -222,10 +247,24 @@ function generateRichDetails(title, category, platform) {
     'laptop', 'macbook', 'computer', 'notebook', 'chromebook', 'ultrabook', 'thinkpad', 'zenbook', 
     'inspiron', 'pavilion', 'hp', 'dell', 'lenovo', 'acer', 'mac', 'desktop'
   ];
+  const earbudsKeywords = [
+    'earbud', 'earbuds', 'buds', 'airpod', 'airpods', 'tws', 'in-ear', 'earphone', 'earphones', 'ear buds', 'ear bid', 'ear bids'
+  ];
   const audioKeywords = [
-    'headphone', 'earphone', 'audio', 'speaker', 'buds', 'airpods', 'soundbar', 'headset', 'earbuds', 
+    'headphone', 'audio', 'speaker', 'soundbar', 'headset', 
     'noise-cancelling', 'anc', 'jbl', 'bose', 'boat', 'noise'
   ];
+
+  const isEarbuds = earbudsKeywords.some(keyword => name.includes(keyword)) ||
+                    /ear[\s-]*buds?/i.test(name) ||
+                    /air[\s-]*pods?/i.test(name) ||
+                    /ear[\s-]*phones?/i.test(name) ||
+                    /aer[\s-]*buds?/i.test(name) ||
+                    /aer[\s-]*phones?/i.test(name);
+  const isAudio = audioKeywords.some(keyword => name.includes(keyword)) ||
+                  /h[aeo]*d[\s-]*[pf]h?o*n/i.test(name) ||
+                  /h[aeo]*d[\s-]*set/i.test(name) ||
+                  /ear[\s-]*phone/i.test(name);
 
   if (watchKeywords.some(keyword => name.includes(keyword))) {
     specs = {
@@ -242,6 +281,37 @@ function generateRichDetails(title, category, platform) {
       { stars: 5, comment: "Beautiful display, very bright even in direct sunlight. Heart rate tracking is super accurate compared to medical devices.", author: "Amit Trivedi" },
       { stars: 4, comment: "Solid 10-day battery life. The Bluetooth calling feature works perfectly without lag.", author: "Ritu Singhal" },
       { stars: 5, comment: "Premium stainless steel design. Looks and feels like a luxury watch!", author: "Sanjay Dutta" }
+    ];
+  } else if (isEarbuds) {
+    specs = {
+      "Acoustic Driver": "10mm High-Fidelity Dynamic Drivers",
+      "Bluetooth Version": "Bluetooth 5.3 with Instant Auto-Pairing",
+      "Active Noise Cancelling": "Up to 30dB Smart Active Noise Reduction",
+      "Battery Life": "Up to 32 Hours total with Compact Charging Case",
+      "Fast Charging": "10-minute charge gives 2 hours playback",
+      "Touch Controls": "Intuitive Smart Touch controls for Music & Calls",
+      "Water Protection": "IPX5 Sweat and Water Resistance rating",
+      "Microphones": "Quad-mic system with Environmental Noise Cancellation (ENC)"
+    };
+    reviews = [
+      { stars: 5, comment: "Super comfortable fit and the sound quality is top-notch! The bass is punching.", author: "Neha Sen" },
+      { stars: 4, comment: "Battery lasts forever. Charging case is so pocketable and matches modern design.", author: "Rajesh Iyer" },
+      { stars: 5, comment: "Excellent noise isolation during calls. Unbeatable value for the price.", author: "Simran Kaur" }
+    ];
+  } else if (isAudio) {
+    specs = {
+      "Acoustic Driver": "40mm High-Resolution Dynamic Neodymium Drivers",
+      "Active Noise Cancelling": "Up to 45dB Smart Hybrid ANC Technology",
+      "Bluetooth Version": "Bluetooth 5.3 with Dual-Device Connection",
+      "Battery Capacity": "Up to 40 hours of playtime (ANC OFF)",
+      "Fast Charging": "10-min charge gives up to 5 hours playback",
+      "Microphones": "4x Beamforming Mics with AI Call Noise Reduction",
+      "Audio Codecs": "AAC, SBC, and Hi-Res Wireless Audio Support"
+    };
+    reviews = [
+      { stars: 5, comment: "Studio grade sound isolation. You won't hear any background noise!", author: "Karan Johar" },
+      { stars: 4, comment: "Solid deep bass response and clear vocals. Very comfortable on long trips.", author: "Anjali Gupta" },
+      { stars: 5, comment: "Excellent build. The earcups are super soft and fit perfectly.", author: "Rohan Kapoor" }
     ];
   } else if (phoneKeywords.some(keyword => name.includes(keyword))) {
     specs = {
@@ -274,21 +344,6 @@ function generateRichDetails(title, category, platform) {
       { stars: 5, comment: "Very fast laptop. Starts up in seconds. Ideal for developers.", author: "Vikram Malhotra" },
       { stars: 4, comment: "Stunning screen quality and premium build. Trackpad is huge and precise.", author: "Deepika Sen" },
       { stars: 5, comment: "Lightweight and powerful. The battery backup is a lifesaver.", author: "Siddharth Rao" }
-    ];
-  } else if (audioKeywords.some(keyword => name.includes(keyword))) {
-    specs = {
-      "Acoustic Driver": "40mm High-Resolution Dynamic Neodymium Drivers",
-      "Active Noise Cancelling": "Up to 45dB Smart Hybrid ANC Technology",
-      "Bluetooth Version": "Bluetooth 5.3 with Dual-Device Connection",
-      "Battery Capacity": "Up to 40 hours of playtime (ANC OFF)",
-      "Fast Charging": "10-min charge gives up to 5 hours playback",
-      "Microphones": "4x Beamforming Mics with AI Call Noise Reduction",
-      "Audio Codecs": "AAC, SBC, and Hi-Res Wireless Audio Support"
-    };
-    reviews = [
-      { stars: 5, comment: "Studio grade sound isolation. You won't hear any background noise!", author: "Karan Johar" },
-      { stars: 4, comment: "Solid deep bass response and clear vocals. Very comfortable on long trips.", author: "Anjali Gupta" },
-      { stars: 5, comment: "Excellent build. The earcups are super soft and fit perfectly.", author: "Rohan Kapoor" }
     ];
   } else if (name.includes('shoe') || name.includes('sneaker') || name.includes('nike') || name.includes('adidas') || name.includes('puma') || name.includes('reebok') || name.includes('footwear')) {
     specs = {

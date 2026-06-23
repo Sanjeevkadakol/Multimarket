@@ -13,10 +13,12 @@ import {
   getFavorites,
   addFavorite,
   removeFavorite,
+  getAllFavoritesWithUsers,
   logPrice,
   upsertProduct,
   getProductDetails,
   verifyUser,
+  registerUser,
   getPlatformId,
   addComparison,
   getComparisonsForProduct
@@ -77,6 +79,34 @@ app.post('/api/login', (req, res) => {
     }
   } catch (error) {
     console.error('Authentication error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// User registration using the relational USERS table
+app.post('/api/register', (req, res) => {
+  const { name, email, password } = req.body;
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: 'Name, email, and password are required' });
+  }
+
+  try {
+    const userId = registerUser(name, email, password, 'user');
+    res.json({
+      success: true,
+      message: 'Registration successful',
+      user: {
+        user_id: userId,
+        name,
+        email,
+        role: 'user'
+      }
+    });
+  } catch (error) {
+    if (error.message && error.message.includes('UNIQUE constraint failed')) {
+      return res.status(409).json({ error: 'Email address is already registered' });
+    }
+    console.error('Registration error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -197,8 +227,12 @@ app.get('/api/search', async (req, res) => {
 
 // 2. Favorites REST API Endpoints
 app.get('/api/favorites', (req, res) => {
+  const { user_id } = req.query;
+  if (!user_id) {
+    return res.status(400).json({ error: 'User ID query parameter is required' });
+  }
   try {
-    const list = getFavorites();
+    const list = getFavorites(user_id);
     res.json(list);
   } catch (error) {
     console.error('Failed to get favorites:', error);
@@ -207,13 +241,16 @@ app.get('/api/favorites', (req, res) => {
 });
 
 app.post('/api/favorites', (req, res) => {
-  const { id, title, price, image, link, platform } = req.body;
+  const { user_id, id, title, price, image, link, platform } = req.body;
+  if (!user_id) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
   if (!id || !title) {
     return res.status(400).json({ error: 'ID and Title are required' });
   }
 
   try {
-    addFavorite({ id, title, price, image, link, platform });
+    addFavorite(user_id, { id, title, price, image, link, platform });
     res.json({ success: true, message: 'Added to favorites' });
   } catch (error) {
     console.error('Failed to save favorite:', error);
@@ -223,16 +260,31 @@ app.post('/api/favorites', (req, res) => {
 
 app.delete('/api/favorites/:id', (req, res) => {
   const { id } = req.params;
+  const { user_id } = req.query;
   if (!id) {
     return res.status(400).json({ error: 'ID is required' });
   }
+  if (!user_id) {
+    return res.status(400).json({ error: 'User ID query parameter is required' });
+  }
 
   try {
-    removeFavorite(id);
+    removeFavorite(user_id, id);
     res.json({ success: true, message: 'Removed from favorites' });
   } catch (error) {
     console.error('Failed to remove favorite:', error);
     res.status(500).json({ error: 'Failed to remove favorite' });
+  }
+});
+
+// Admin endpoint to get all wishlisted items with user metadata
+app.get('/api/admin/favorites', (req, res) => {
+  try {
+    const list = getAllFavoritesWithUsers();
+    res.json(list);
+  } catch (error) {
+    console.error('Failed to get all wishlists for admin:', error);
+    res.status(500).json({ error: 'Failed to fetch admin wishlists' });
   }
 });
 
